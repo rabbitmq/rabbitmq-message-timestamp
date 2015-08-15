@@ -57,4 +57,6 @@ applies_to() ->
 
 set_content_timestamp(#content{properties = Props} = Content, Timestamp) ->
     Props2 = Props#'P_basic'{timestamp = Timestamp},
+    %% we need to reset properties_bin = none so the new properties
+    %% get serialized when deliverying the message.
     Content#content{properties = Props2, properties_bin = none}.
