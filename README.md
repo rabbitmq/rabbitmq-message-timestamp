@@ -1,7 +1,7 @@
 # RabbitMQ Message Timestamp Plugin #
 
 This plugin fills the `timestamp` property of a message as it enters
-RabbitMQ with the current timestamp value.
+RabbitMQ with the current (server node) timestamp value.
 
 ## Supported RabbitMQ Versions ##
 
