@@ -13,19 +13,13 @@ To use this plugin you will have to build RabbitMQ from master and
 then build the plugin against it, since it depends on a new
 _interceptors_ API that's not yet available on the 3.5.x series.
 
-Install and setup the RabbitMQ Public Umbrella as explained here:
-[http://www.rabbitmq.com/plugin-development.html#getting-started](http://www.rabbitmq.com/plugin-development.html#getting-started).
+Clone the repository, then `cd` into the umbrella folder and type:
 
-Then `cd` into the umbrella folder and type:
-
-    $ git clone git://github.com/rabbitmq/rabbitmq-message-timestamp.git
-    $ cd rabbitmq-message-timestamp
-    $ make
+    make dist VERSION=1.0.0
 
 Finally copy all the `*.ez` files inside the `dist` folder to the
 `$RABBITMQ_HOME/plugins` folder. Don't copy the file
-`rabbit_common-x.y.z` since it's not needed inside the broker
-installation.
+`rabbit_common-x.y.z` since it's already part of RabbitMQ distribution.
 
 ## Usage ##
 
