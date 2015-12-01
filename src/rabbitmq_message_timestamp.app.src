@@ -1,6 +1,6 @@
 {application, rabbitmq_message_timestamp,
  [{description, "RabbitMQ Message Timestamp"},
-  {vsn, "%%VSN%%"},
+  {vsn, ""},
   {modules, []},
   {registered, []},
   {applications, [kernel, stdlib, rabbit]}]}.
