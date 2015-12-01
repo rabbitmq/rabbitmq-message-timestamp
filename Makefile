@@ -1,6 +1,6 @@
 PROJECT = rabbitmq_message_timestamp
 
-DEPS = amqp_client rabbit
+TEST_DEPS = amqp_client rabbit
 
 DEP_PLUGINS = rabbit_common/mk/rabbitmq-plugin.mk
 
