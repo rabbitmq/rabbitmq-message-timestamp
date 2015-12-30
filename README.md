@@ -9,13 +9,20 @@ This plugin targets RabbitMQ 3.6.0 and later versions.
 
 ## Installing ##
 
-To use this plugin you will have to build RabbitMQ from master and
-then build the plugin against it, since it depends on a new
-_interceptors_ API that's not yet available on the 3.5.x series.
+Clone the repo and then build it with `make`:
 
-Clone the repository, then `cd` into the umbrella folder and type:
+```
+git clone git@github.com:rabbitmq/rabbitmq-message-timestamp.git
+# [snip]
+cd rabbitmq-message-timestamp
+make
+# [snip]
+make dist
+# [snip]
+ls plugins/*
+```
 
-    make dist VERSION=1.0.0
+Build artefacts then can be found under the `plugins` directory.
 
 Finally copy all the `*.ez` files inside the `dist` folder to the
 `$RABBITMQ_HOME/plugins` folder. Don't copy the file
