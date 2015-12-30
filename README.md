@@ -12,8 +12,6 @@ This plugin targets RabbitMQ 3.6.0 and later versions.
 Clone the repo and then build it with `make`:
 
 ```
-git clone git@github.com:rabbitmq/rabbitmq-message-timestamp.git
-# [snip]
 cd rabbitmq-message-timestamp
 make
 # [snip]
@@ -24,9 +22,7 @@ ls plugins/*
 
 Build artefacts then can be found under the `plugins` directory.
 
-Finally copy all the `*.ez` files inside the `dist` folder to the
-`$RABBITMQ_HOME/plugins` folder. Don't copy the file
-`rabbit_common-x.y.z` since it's already part of RabbitMQ distribution.
+Finally copy `plugins/rabbitmq_message_timestamp.ez` to the `$RABBITMQ_HOME/plugins` folder.
 
 ## Usage ##
 
