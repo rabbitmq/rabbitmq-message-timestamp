@@ -55,8 +55,14 @@ applies_to() ->
 
 %%----------------------------------------------------------------------------
 
-set_content_timestamp(#content{properties = Props} = Content, Timestamp) ->
-    Props2 = Props#'P_basic'{timestamp = Timestamp},
+                                                % Do not overwrite an existing timestamp
+set_content_timestamp(#content{properties = Props} = Content, _)
+  when is_integer(Props#'P_basic'.timestamp) ->
+    Content;
+
+set_content_timestamp(#content{properties = Props} = Content, Timestamp)
+  when Props#'P_basic'.timestamp == undefined ->
     %% we need to reset properties_bin = none so the new properties
     %% get serialized when deliverying the message.
-    Content#content{properties = Props2, properties_bin = none}.
+    Content#content{properties = Props#'P_basic'{timestamp = Timestamp},
+                    properties_bin = none}.
