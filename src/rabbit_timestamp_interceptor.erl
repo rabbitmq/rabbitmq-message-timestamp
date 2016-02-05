@@ -35,33 +35,34 @@
                     {enables, recovery}]}).
 
 init(_Ch) ->
-    undefined.
+  undefined.
 
 description() ->
-    [{description,
-      <<"Adds current timestamp to messages as they enter RabbitMQ">>}].
+  [{description,
+    <<"Adds current timestamp to messages as they enter RabbitMQ">>}].
 
 intercept(#'basic.publish'{} = Method, Content, _IState) ->
-    DecodedContent = rabbit_binary_parser:ensure_content_decoded(Content),
-    Timestamp = time_compat:os_system_time(seconds),
-    Content2 = set_content_timestamp(DecodedContent, Timestamp),
-    {Method, Content2};
+  DecodedContent = rabbit_binary_parser:ensure_content_decoded(Content),
+  Timestamp = time_compat:os_system_time(seconds),
+  Content2 = set_content_timestamp(DecodedContent, Timestamp),
+  {Method, Content2};
 
 intercept(Method, Content, _VHost) ->
-    {Method, Content}.
+  {Method, Content}.
 
 applies_to() ->
-    ['basic.publish'].
+  ['basic.publish'].
 
 %%----------------------------------------------------------------------------
 
-set_content_timestamp(#content{properties = Props} = Content, Timestamp) ->
-    case Props#'P_basic'.timestamp of
-      undefined ->
-        Props2 = Props#'P_basic'{timestamp = Timestamp},
-        %% we need to reset properties_bin = none so the new properties
-        %% get serialized when deliverying the message.
-        Content#content{properties = Props2, properties_bin = none};
-      I when is_integer(I) -> Content
-    end.
+% Do not overwrite an existing timestamp
+set_content_timestamp(#content{properties = Props} = Content, _)
+    when is_integer(Props#'P_basic'.timestamp) ->
+  Content;
 
+set_content_timestamp(#content{properties = Props} = Content, Timestamp)
+    when Props#'P_basic'.timestamp == undefined ->
+  Props2 = Props#'P_basic'{timestamp = Timestamp},
+  %% we need to reset properties_bin = none so the new properties
+  %% get serialized when deliverying the message.
+  Content#content{properties = Props2, properties_bin = none}.
