@@ -21,6 +21,8 @@
 -include_lib("eunit/include/eunit.hrl").
 -include_lib("amqp_client/include/amqp_client.hrl").
 
+-define(MESSAGE_DELAY, 1000).
+
 test() ->
     ok = eunit:test(tests(?MODULE, 60), [verbose]).
 
@@ -49,7 +51,47 @@ timestamp_test() ->
          ?assert(get_timestamp(Msg) > 0)
      end|| Msg <- Result],
 
+    amqp_channel:call(Chan, delete_queue(Q)),
+    amqp_channel:call(Chan, delete_exchange(Ex)),
+
     ok.
+
+existing_timestamp_test() ->
+    {ok, Conn} = amqp_connection:start(#amqp_params_network{}),
+    {ok, Chan} = amqp_connection:open_channel(Conn),
+
+    Ex = <<"e1">>,
+    Q = <<"q">>,   %TODO: reduce test pollution, let both tests use same queue name
+
+    setup_fabric(Chan, make_exchange(Ex, <<"direct">>), make_queue(Q)),
+
+    Msgs = [1, 2, 3, 4, 5],
+    Now = time_compat:os_system_time(seconds),
+    Timestamps = lists:duplicate(length(Msgs), Now),
+
+    timer:sleep(?MESSAGE_DELAY),
+
+    amqp_channel:call(Chan, #'confirm.select'{}),
+
+    publish_timestamped_messages(Chan, Ex, Msgs, Timestamps),
+
+    amqp_channel:wait_for_confirms_or_die(Chan),
+
+    {ok, Result} = consume(Chan, Q, Msgs, 5000),
+
+    [begin
+         ?assertNotEqual(get_timestamp(Msg), undefined),
+         ?assert(is_integer(get_timestamp(Msg))),
+         ?assert(get_timestamp(Msg) =:= Now)
+     end|| Msg <- Result],
+
+    amqp_channel:call(Chan, delete_queue(Q)),
+    amqp_channel:call(Chan, delete_exchange(Ex)),
+
+    ok.
+
+get_payload(#amqp_msg{payload = P}) ->
+  binary_to_term(P).
 
 get_timestamp(#amqp_msg{props = #'P_basic'{timestamp = T}}) ->
     T.
@@ -86,6 +128,16 @@ publish_messages(Chan, Ex, RK, Msgs) ->
                                         routing_key = RK},
                        make_msg(V)) || V <- Msgs].
 
+publish_timestamped_messages(Chan, Ex, Msgs, Timestamps) ->
+    publish_timestamped_messages(Chan, Ex, <<>>, Msgs, Timestamps).
+
+publish_timestamped_messages(Chan, Ex, RK, Msgs, Timestamps) ->
+    [amqp_channel:call(Chan,
+                       #'basic.publish'{exchange = Ex,
+                                        routing_key = RK},
+                       make_timestamped_msg(V,T)) ||
+                       {V,T} <- lists:zip(Msgs, Timestamps)].
+
 consume(Chan, Q, Msgs, Timeout) ->
     #'basic.consume_ok'{} =
         amqp_channel:subscribe(Chan, #'basic.consume'{queue  = Q,
@@ -106,6 +158,16 @@ collect(Curr, N, Timeout, Acc) ->
             {error, {timeout, Acc}}
     end.
 
+delete_exchange(Ex) ->
+    #'exchange.delete' {
+       exchange       = Ex
+      }.
+
+delete_queue(Q) ->
+    #'queue.delete' {
+       queue       = Q
+      }.
+
 make_queue(Q) ->
     #'queue.declare' {
        queue       = Q
@@ -119,6 +181,12 @@ make_exchange(Ex, Type) ->
 
 make_msg(V) ->
     #amqp_msg{payload = term_to_binary(V)}.
+
+make_timestamped_msg(V,T) ->
+    #amqp_msg{
+      props = #'P_basic'{timestamp = T},
+      payload = term_to_binary(V)
+    }.
 
 tests(Module, Timeout) ->
     {foreach, fun() -> ok end,
