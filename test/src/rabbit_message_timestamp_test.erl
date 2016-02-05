@@ -21,7 +21,7 @@
 -include_lib("eunit/include/eunit.hrl").
 -include_lib("amqp_client/include/amqp_client.hrl").
 
--define(MESSAGE_DELAY, 1000).
+-define(SEND_DELAY, 1000).
 
 test() ->
     ok = eunit:test(tests(?MODULE, 60), [verbose]).
@@ -69,7 +69,10 @@ existing_timestamp_test() ->
     Now = time_compat:os_system_time(seconds),
     Timestamps = lists:duplicate(length(Msgs), Now),
 
-    timer:sleep(?MESSAGE_DELAY),
+    % Timestamps are in seconds, so we wait a short period before sending 
+    % the message to ensure that the timestamps above will be different 
+    % from the ones the interceptor tries to set.
+    timer:sleep(?SEND_DELAY),
 
     amqp_channel:call(Chan, #'confirm.select'{}),
 
