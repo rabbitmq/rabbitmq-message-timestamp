@@ -61,7 +61,7 @@ existing_timestamp_test() ->
     {ok, Chan} = amqp_connection:open_channel(Conn),
 
     Ex = <<"e1">>,
-    Q = <<"q">>,   %TODO: reduce test pollution, let both tests use same queue name
+    Q = <<"q">>,
 
     setup_fabric(Chan, make_exchange(Ex, <<"direct">>), make_queue(Q)),
 
