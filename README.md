@@ -45,7 +45,7 @@ This plugin should not be enabled at the same time as any other
 interceptors  that hook into the `basic.publish` process, such as 
 the  `rabbitmq-routing-node-stamp` plugin. Enabling more than one 
 interceptor that is registered to the `basic.publish` process will 
-cause all AMQP connections to fail when creating a new channel.
+cause all AMQP 0-9-1 connections to fail when creating a new channel.
 
 If there's enough demand, we could add in the future a way for only
 time-stamping messages that crosses certain exchanges, say by applying
