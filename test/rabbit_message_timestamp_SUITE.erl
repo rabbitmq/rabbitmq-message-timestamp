@@ -14,21 +14,65 @@
 %% Copyright (c) 2007-2016 Pivotal Software, Inc.  All rights reserved.
 %%
 
--module(rabbit_message_timestamp_test).
+-module(rabbit_message_timestamp_SUITE).
 
--export([test/0]).
+-compile(export_all).
 
+-include_lib("common_test/include/ct.hrl").
 -include_lib("eunit/include/eunit.hrl").
 -include_lib("amqp_client/include/amqp_client.hrl").
 
 -define(SEND_DELAY, 1000).
 
-test() ->
-    ok = eunit:test(tests(?MODULE, 60), [verbose]).
+all() ->
+    [
+      {group, non_parallel_tests}
+    ].
 
-timestamp_test() ->
-    {ok, Conn} = amqp_connection:start(#amqp_params_network{}),
-    {ok, Chan} = amqp_connection:open_channel(Conn),
+groups() ->
+    [
+      {non_parallel_tests, [], [
+                                timestamp_test,
+                                existing_timestamp_test
+                               ]}
+    ].
+
+%% -------------------------------------------------------------------
+%% Testsuite setup/teardown.
+%% -------------------------------------------------------------------
+
+init_per_suite(Config) ->
+    rabbit_ct_helpers:log_environment(),
+    Config1 = rabbit_ct_helpers:set_config(Config, [
+        {rmq_nodename_suffix, ?MODULE}
+      ]),
+    rabbit_ct_helpers:run_setup_steps(Config1,
+      rabbit_ct_broker_helpers:setup_steps() ++
+      rabbit_ct_client_helpers:setup_steps()).
+
+end_per_suite(Config) ->
+    rabbit_ct_helpers:run_teardown_steps(Config,
+      rabbit_ct_client_helpers:teardown_steps() ++
+      rabbit_ct_broker_helpers:teardown_steps()).
+
+init_per_group(_, Config) ->
+    Config.
+
+end_per_group(_, Config) ->
+    Config.
+
+init_per_testcase(Testcase, Config) ->
+    rabbit_ct_helpers:testcase_started(Config, Testcase).
+
+end_per_testcase(Testcase, Config) ->
+    rabbit_ct_helpers:testcase_finished(Config, Testcase).
+
+%% -------------------------------------------------------------------
+%% Testcases.
+%% -------------------------------------------------------------------
+
+timestamp_test(Config) ->
+    Chan = rabbit_ct_client_helpers:open_channel(Config, 0),
 
     Ex = <<"e1">>,
     Q = <<"q">>,
@@ -54,11 +98,11 @@ timestamp_test() ->
     amqp_channel:call(Chan, delete_queue(Q)),
     amqp_channel:call(Chan, delete_exchange(Ex)),
 
-    ok.
+    rabbit_ct_client_helpers:close_channel(Chan),
+    passed.
 
-existing_timestamp_test() ->
-    {ok, Conn} = amqp_connection:start(#amqp_params_network{}),
-    {ok, Chan} = amqp_connection:open_channel(Conn),
+existing_timestamp_test(Config) ->
+    Chan = rabbit_ct_client_helpers:open_channel(Config, 0),
 
     Ex = <<"e1">>,
     Q = <<"q">>,
@@ -91,7 +135,13 @@ existing_timestamp_test() ->
     amqp_channel:call(Chan, delete_queue(Q)),
     amqp_channel:call(Chan, delete_exchange(Ex)),
 
-    ok.
+    rabbit_ct_client_helpers:close_channel(Chan),
+    passed.
+
+
+%% -------------------------------------------------------------------
+%% Implementation.
+%% -------------------------------------------------------------------
 
 get_payload(#amqp_msg{payload = P}) ->
   binary_to_term(P).
@@ -190,9 +240,3 @@ make_timestamped_msg(V,T) ->
       props = #'P_basic'{timestamp = T},
       payload = term_to_binary(V)
     }.
-
-tests(Module, Timeout) ->
-    {foreach, fun() -> ok end,
-     [{timeout, Timeout, fun () -> Module:F() end} ||
-         {F, _Arity} <- proplists:get_value(exports, Module:module_info()),
-         string:right(atom_to_list(F), 5) =:= "_test"]}.
