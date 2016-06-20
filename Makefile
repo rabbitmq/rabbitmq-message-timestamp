@@ -1,6 +1,6 @@
 PROJECT = rabbitmq_message_timestamp
 
-TEST_DEPS = amqp_client
+TEST_DEPS += rabbit
 
 DEP_PLUGINS = rabbit_common/mk/rabbitmq-plugin.mk
 
@@ -12,10 +12,3 @@ ERLANG_MK_COMMIT = rabbitmq-tmp
 
 include rabbitmq-components.mk
 include erlang.mk
-
-# --------------------------------------------------------------------
-# Testing.
-# --------------------------------------------------------------------
-
-WITH_BROKER_TEST_COMMANDS := \
-	rabbit_message_timestamp_test:test()
