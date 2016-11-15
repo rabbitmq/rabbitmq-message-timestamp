@@ -7,22 +7,18 @@ RabbitMQ with the current (server node) timestamp value.
 
 This plugin targets RabbitMQ 3.6.0 and later versions.
 
-## Installing ##
+## Installation
 
-Clone the repo and then build it with `make`:
+Binary builds of this plugin from
+the [Community Plugins page](http://www.rabbitmq.com/community-plugins.html).
 
-```
-cd rabbitmq-message-timestamp
-make
-# [snip]
-make dist
-# [snip]
-ls plugins/*
-```
+See [Plugin Installation](http://www.rabbitmq.com/installing-plugins.html) for details
+about how to install plugins that do not ship with RabbitMQ.
 
-Build artefacts then can be found under the `plugins` directory.
+## Building from Source
 
-Finally copy `plugins/rabbitmq_message_timestamp.ez` to the `$RABBITMQ_HOME/plugins` folder.
+You can build and install it like any other plugin (see
+[the plugin development guide](http://www.rabbitmq.com/plugin-development.html)).
 
 ## Usage ##
 
