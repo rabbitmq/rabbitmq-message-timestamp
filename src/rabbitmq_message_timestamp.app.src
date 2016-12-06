@@ -1,7 +1,0 @@
-{application, rabbitmq_message_timestamp,
- [{description, "RabbitMQ Message Timestamp"},
-  {vsn, ""},
-  {modules, []},
-  {registered, []},
-  {broker_version_requirements, ["3.6.0", "3.7.0"]},
-  {applications, [kernel, stdlib, rabbit_common, rabbit]}]}.
