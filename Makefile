@@ -2,7 +2,7 @@ PROJECT = rabbitmq_message_timestamp
 PROJECT_DESCRIPTION = RabbitMQ Message Timestamp
 
 define PROJECT_APP_EXTRA_KEYS
-	{broker_version_requirements, ["3.6.0", "3.7.0"]}
+	{broker_version_requirements, []}
 endef
 
 DEPS = rabbit_common rabbit
