@@ -14,7 +14,7 @@ as they override the same extension point.
 
 ## Installation
 
-Binary builds of this plugin from
+Binary builds of this plugin can be obtained from
 the [Community Plugins page](http://www.rabbitmq.com/community-plugins.html).
 
 See [Plugin Installation](http://www.rabbitmq.com/installing-plugins.html) for details
