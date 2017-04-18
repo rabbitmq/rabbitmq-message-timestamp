@@ -9,7 +9,7 @@ This plugin targets RabbitMQ 3.6.0 and later versions.
 
 ## Limitations
 
-This plugin cannot be used together with [rabbitmq-routing-node-timestamp](https://github.com/rabbitmq/rabbitmq-routing-node-stamp)
+This plugin cannot be used together with [rabbitmq-routing-node-stamp](https://github.com/rabbitmq/rabbitmq-routing-node-stamp)
 as they override the same extension point.
 
 ## Installation
