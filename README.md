@@ -7,6 +7,11 @@ RabbitMQ with the current (server node) timestamp value.
 
 This plugin targets RabbitMQ 3.6.0 and later versions.
 
+## Limitations
+
+This plugin cannot be used together with [rabbitmq-routing-node-timestamp](https://github.com/rabbitmq/rabbitmq-routing-node-stamp)
+as they override the same extension point.
+
 ## Installation
 
 Binary builds of this plugin from
