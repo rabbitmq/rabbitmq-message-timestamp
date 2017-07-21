@@ -94,8 +94,8 @@ timestamp_test(Config) ->
          ?assertNotEqual(get_timestamp(Msg), undefined),
          ?assert(is_integer(get_timestamp(Msg))),
          ?assert(get_timestamp(Msg) > 0),
-         ?assertNotEqual(get_header_property(?TIMESTAMP_IN_MS, Msg), false),
-         ?assert(get_header_property(?TIMESTAMP_IN_MS, Msg) > 0)
+         ?assertNotEqual(get_single_header(?TIMESTAMP_IN_MS, Msg), false),
+         ?assert(get_single_header(?TIMESTAMP_IN_MS, Msg) > 0)
      end|| Msg <- Result],
 
     amqp_channel:call(Chan, delete_queue(Q)),
@@ -152,7 +152,7 @@ get_payload(#amqp_msg{payload = P}) ->
 get_timestamp(#amqp_msg{props = #'P_basic'{timestamp = T}}) ->
     T.
 
-get_header_property(<<_,_/binary>> = Target,
+get_single_header(Target,
     #amqp_msg{props = #'P_basic'{headers = Headers}}) ->
         lists:keyfind(Target, 1, Headers).
 

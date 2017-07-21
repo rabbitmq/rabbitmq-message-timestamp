@@ -20,6 +20,8 @@
 -include_lib("rabbit_common/include/rabbit_framing.hrl").
 -include_lib("rabbit_message_timestamp.hrl").
 
+-import(rabbit_basic, [header/2]).
+
 -behaviour(rabbit_channel_interceptor).
 
 -export([description/0, intercept/3, applies_to/0, init/1]).
@@ -71,15 +73,15 @@ set_content_timestamp(#content{properties = Props} = Content, Timestamp)
                     properties_bin = none}.
 
 set_content_timestamp_millis(#content{properties = #'P_basic'{headers = Headers} = Props} = Content, TimestampMs) ->
-  NewHeaders = add_header(Headers, new_timestamp_millis_header(TimestampMs)),
-  Content#content{
-    properties = Props#'P_basic'{headers = NewHeaders},
-    properties_bin = none
-   }.
+  case header(?TIMESTAMP_IN_MS, Headers) of
+    undefined ->
+      Content#content{
+        properties = Props#'P_basic'{headers = add_header(Headers, {?TIMESTAMP_IN_MS, long, TimestampMs})},
+        properties_bin = none
+       };
+    _ -> Content  % Do not overwrite an existing TIMESTAMP_IN_MS.
+    end.
 
 add_header(undefined, Header) -> [Header];
 add_header(Headers, Header) ->
   lists:keystore(element(1, Header), 1, Headers, Header).
-
-new_timestamp_millis_header(TimestampMs) ->
-  {?TIMESTAMP_IN_MS, long, TimestampMs}.
