@@ -18,6 +18,7 @@
 
 -include_lib("rabbit_common/include/rabbit.hrl").
 -include_lib("rabbit_common/include/rabbit_framing.hrl").
+-include_lib("rabbit_message_timestamp.hrl").
 
 -behaviour(rabbit_channel_interceptor).
 
@@ -44,8 +45,10 @@ description() ->
 intercept(#'basic.publish'{} = Method, Content, _IState) ->
     DecodedContent = rabbit_binary_parser:ensure_content_decoded(Content),
     Timestamp = os:system_time(seconds),
+    TimestampMs = os:system_time(milli_seconds),
     Content2 = set_content_timestamp(DecodedContent, Timestamp),
-    {Method, Content2};
+    Content3 = set_content_timestamp_millis(Content2, TimestampMs),
+    {Method, Content3};
 
 intercept(Method, Content, _VHost) ->
     {Method, Content}.
@@ -66,3 +69,17 @@ set_content_timestamp(#content{properties = Props} = Content, Timestamp)
     %% get serialized when deliverying the message.
     Content#content{properties = Props#'P_basic'{timestamp = Timestamp},
                     properties_bin = none}.
+
+set_content_timestamp_millis(#content{properties = #'P_basic'{headers = Headers} = Props} = Content, TimestampMs) ->
+  NewHeaders = add_header(Headers, new_timestamp_millis_header(TimestampMs)),
+  Content#content{
+    properties = Props#'P_basic'{headers = NewHeaders},
+    properties_bin = none
+   }.
+
+add_header(undefined, Header) -> [Header];
+add_header(Headers, Header) ->
+  lists:keystore(element(1, Header), 1, Headers, Header).
+
+new_timestamp_millis_header(TimestampMs) ->
+  {?TIMESTAMP_IN_MS, long, TimestampMs}.
