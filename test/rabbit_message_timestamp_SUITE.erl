@@ -21,6 +21,7 @@
 -include_lib("common_test/include/ct.hrl").
 -include_lib("eunit/include/eunit.hrl").
 -include_lib("amqp_client/include/amqp_client.hrl").
+-include_lib("rabbit_message_timestamp.hrl").
 
 -define(SEND_DELAY, 1000).
 
@@ -92,7 +93,9 @@ timestamp_test(Config) ->
     [begin
          ?assertNotEqual(get_timestamp(Msg), undefined),
          ?assert(is_integer(get_timestamp(Msg))),
-         ?assert(get_timestamp(Msg) > 0)
+         ?assert(get_timestamp(Msg) > 0),
+         ?assertNotEqual(get_single_header(?TIMESTAMP_IN_MS, Msg), false),
+         ?assert(get_single_header(?TIMESTAMP_IN_MS, Msg) > 0)
      end|| Msg <- Result],
 
     amqp_channel:call(Chan, delete_queue(Q)),
@@ -148,6 +151,10 @@ get_payload(#amqp_msg{payload = P}) ->
 
 get_timestamp(#amqp_msg{props = #'P_basic'{timestamp = T}}) ->
     T.
+
+get_single_header(Target,
+    #amqp_msg{props = #'P_basic'{headers = Headers}}) ->
+        lists:keyfind(Target, 1, Headers).
 
 setup_fabric(Chan, ExDeclare, QueueDeclare) ->
     setup_fabric(Chan, ExDeclare, QueueDeclare, <<>>).
