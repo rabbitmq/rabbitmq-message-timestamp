@@ -79,8 +79,9 @@ set_content_timestamp_millis(#content{properties = #'P_basic'{headers = Headers}
         properties = Props#'P_basic'{headers = add_header(Headers, {?TIMESTAMP_IN_MS, long, TimestampMs})},
         properties_bin = none
        };
-    _ -> Content  % Do not overwrite an existing TIMESTAMP_IN_MS.
-    end.
+    %% Do not overwrite an existing TIMESTAMP_IN_MS.
+    _ -> Content
+  end.
 
 add_header(undefined, Header) -> [Header];
 add_header(Headers, Header) ->
