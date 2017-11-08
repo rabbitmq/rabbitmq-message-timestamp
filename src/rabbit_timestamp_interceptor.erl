@@ -46,8 +46,8 @@ description() ->
 
 intercept(#'basic.publish'{} = Method, Content, _IState) ->
     DecodedContent = rabbit_binary_parser:ensure_content_decoded(Content),
-    Timestamp = os:system_time(seconds),
-    TimestampMs = os:system_time(milli_seconds),
+    Timestamp = time_compat:os_system_time(seconds),
+    TimestampMs = time_compat:os_system_time(milli_seconds),
     Content2 = set_content_timestamp(DecodedContent, Timestamp),
     Content3 = set_content_timestamp_millis(Content2, TimestampMs),
     {Method, Content3};

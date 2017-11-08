@@ -113,7 +113,7 @@ existing_timestamp_test(Config) ->
     setup_fabric(Chan, make_exchange(Ex, <<"direct">>), make_queue(Q)),
 
     Msgs = [1, 2, 3, 4, 5],
-    Now = os:system_time(seconds),
+    Now = time_compat:os_system_time(seconds),
     Timestamps = lists:duplicate(length(Msgs), Now),
 
     % Timestamps are in seconds, so we wait a short period before sending 
