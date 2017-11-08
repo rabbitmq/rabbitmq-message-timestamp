@@ -1,26 +1,26 @@
 # vim:sw=2:et:
 
-# Use a real VM so we can install all the packages we want.
-sudo: required
-
+sudo: false
 language: erlang
 notifications:
   email:
     - alerts@rabbitmq.com
 addons:
   apt:
-    sources:
-      - sourceline: deb https://packages.erlang-solutions.com/ubuntu precise contrib
-        key_url: https://packages.erlang-solutions.com/ubuntu/erlang_solutions.asc
     packages:
-      # Use Elixir from Erlang Solutions. The provided Elixir is
-      # installed with kiex but is old. By using an prebuilt Debian
-      # package, we save the compilation time.
-      - elixir
+      - awscli
       - xsltproc
+cache:
+  apt: true
+env:
+  global:
+    - secure: LV2FUEdc0EGCW8s26ia4jTfIgii06EMOLLzxc0P00N6V1Ol4YNF7BGkJnPvyeBRjhgSWEWNy6Cki328iNKP2cxFdT3vWEFOnvoqxIWb3hhvvQH8gmKaycmPM1wu/8HY8qjssWJPj9E4RlCiAaIvYj/pkwr2TuTnBKzce7cJ6spK03+VNfIIGohoCTJ5IvTVei8M5TGmEQ7yNM15etd/Sjl4dKshPKIsdew+gq+yZb9ZNbI7T5PD7sRTr8Dq0DTZVU8e4Dm4fffENMfgxrMxuByEv0RqOC5Z1okguUY1xGDFyga27KYcST4Ghd9XMjLrXs+EmtI7ZjWW7gC4SuPaxrdN7C0uRPGu5UWH7t9yK56pyJfjGjzJ4sDk++KQOq8mlf5sm+5h3zKQduiDpDOICnQyxLosLoa63WkGIeYf9ko4UXUjQeINDMAjOx17rgQcFMZ1dHRipPJJOtO6URM9StjhChw+i2ZAhnZ0h3LhC/JF3FUWzsKUD25LEQndixG25MlHc0qFIMkuSZ4XXWCcnsOWR2APc4AwjK1m2gDrvrgQ3sWxAuhZgT1ws6HKa5q4lJt9YK0zH/jliFlDi8p41m0/Jf36DXVRajd5eE04cUs8k6ZjGnJs9XGRW4vVlndt+owQ0tmSLrhFcPCn0m4l6ygCq3c0Kluiou5sZTKFx/co=
+    - secure: k7P7O6bpD+nggLg1TAcw9/CnNxYrw9e1DIP2IfSIlf5pX6p2cA7+Oc86Ze/rtJRIJXxsvEi3Q+h0K+ZHLSlnn25Fai/eKKPEDMljOdLv46WMlC5YX/VcmFo6HqRaXtoHhID7RYf/rzfG8vA7u3vUi/APYCwjlpH0qxXrVQhlru4ZvnIzqFtCX+xpwx9pmTJv79ltfYYhMKvPcriB7Vpjo1zaPJhfZC//OKuOKcjCj5isGR3cDS/KzsvwxI/oG9j4++Ijuzef1vG4g5eMykSBA9073ON6asJMblj7XAKFyr3PMBFwScEXql3DlrrXq4NDvYgvyPTsqzplnOJKRcBZcroiBQJd8CFeMAB/4Kh/NRZu7vj8HBaYGkTaEP6iLGDvKPgGu//dZ2YthHyPgFTmwH5xygWtKzKXWgqxMEX/InH8bpq5ADxTUk9hl4Yjmg3byllknF3cFNF9s1G9POs4qHx7lxelvASLLNNgqCDvpbEkwNYrAsMwhyIVMU0GKJHzaHbObLAf+R0qSACjTh0fngvZUtB5q4OBiXrUsLSOqv1qEeAB7i1mTu9M6b774V+zHY0jXjAAv/3464obZmx9n3ogRVHDICEDc4gq8lbwTtp9bfL4RvUoP0yAEZadM74KbetK5VmLv9Vte/XL0cpaVwmSSWHhWGhXOMttIRmie/s=
+
 otp_release:
-  - "18.3"
-  - "19.0"
+  - "R16B03-1"
+  - "19.3"
+  - "20.1"
 
 before_script:
   # The checkout made by Travis is a "detached HEAD" and branches
@@ -34,11 +34,21 @@ before_script:
     git remote add upstream https://github.com/$TRAVIS_REPO_SLUG.git
     git fetch upstream stable:stable || :
     git fetch upstream master:master || :
-  # Remove all kiex installations. This makes sure that the Erlang
-  # Solutions one is picked: it's after the kiex installations in $PATH.
-  - echo YES | kiex implode
 
-script: make tests
+script:
+  - make xref
+  - make tests
 
-cache:
-  apt: true
+after_failure:
+  - |
+    cd "$TRAVIS_BUILD_DIR"
+    if test -d logs && test "$AWS_ACCESS_KEY_ID" && test "$AWS_SECRET_ACCESS_KEY"; then
+      archive_name="$(basename "$TRAVIS_REPO_SLUG")-$TRAVIS_JOB_NUMBER"
+
+      tar -c --transform "s/^logs/${archive_name}/" -f - logs | \
+        xz > "${archive_name}.tar.xz"
+
+      aws s3 cp "${archive_name}.tar.xz" s3://server-release-pipeline/travis-ci-logs/ \
+        --region eu-west-1 \
+        --acl public-read
+    fi
