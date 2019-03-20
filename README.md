@@ -15,15 +15,15 @@ as they override the same extension point.
 ## Installation
 
 Binary builds of this plugin can be obtained from
-the [Community Plugins page](http://www.rabbitmq.com/community-plugins.html).
+the [Community Plugins page](https://www.rabbitmq.com/community-plugins.html).
 
-See [Plugin Installation](http://www.rabbitmq.com/installing-plugins.html) for details
+See [Plugin Installation](https://www.rabbitmq.com/installing-plugins.html) for details
 about how to install plugins that do not ship with RabbitMQ.
 
 ## Building from Source
 
 You can build and install it like any other plugin (see
-[the plugin development guide](http://www.rabbitmq.com/plugin-development.html)).
+[the plugin development guide](https://www.rabbitmq.com/plugin-development.html)).
 
 ## Usage ##
 
