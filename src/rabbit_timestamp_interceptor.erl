@@ -36,11 +36,12 @@ description() ->
       <<"Adds current timestamp to messages as they enter RabbitMQ">>}].
 
 intercept(#'basic.publish'{} = Method, Content, _IState) ->
+    OverwriteTimestamps = application:get_env(rabbitmq_message_timestamp, overwrite_timestamps, false),
     DecodedContent = rabbit_binary_parser:ensure_content_decoded(Content),
     Timestamp = os:system_time(seconds),
     TimestampMs = os:system_time(milli_seconds),
-    Content2 = set_content_timestamp(DecodedContent, Timestamp),
-    Content3 = set_content_timestamp_millis(Content2, TimestampMs),
+    Content2 = set_content_timestamp(DecodedContent, Timestamp, OverwriteTimestamps),
+    Content3 = set_content_timestamp_millis(Content2, TimestampMs, OverwriteTimestamps),
     {Method, Content3};
 
 intercept(Method, Content, _VHost) ->
@@ -50,30 +51,42 @@ applies_to() ->
     ['basic.publish'].
 
 %%----------------------------------------------------------------------------
-
-                                                % Do not overwrite an existing timestamp
-set_content_timestamp(#content{properties = Props} = Content, _)
+% OverwriteTimestamps = false, do not overwrite an existing timestamp
+set_content_timestamp(#content{properties = Props} = Content, _, false)
   when is_integer(Props#'P_basic'.timestamp) ->
     Content;
-
-set_content_timestamp(#content{properties = Props} = Content, Timestamp)
+% OverwriteTimestamps = true, overwrite an existing timestamp
+set_content_timestamp(#content{properties = Props0} = Content, Timestamp, true)
+  when is_integer(Props0#'P_basic'.timestamp) ->
+    set_content_timestamp(Content, Timestamp);
+set_content_timestamp(#content{properties = Props} = Content, Timestamp, _)
   when Props#'P_basic'.timestamp == undefined ->
-    %% we need to reset properties_bin = none so the new properties
-    %% get serialized when deliverying the message.
-    Content#content{properties = Props#'P_basic'{timestamp = Timestamp},
-                    properties_bin = none}.
+    set_content_timestamp(Content, Timestamp).
 
-set_content_timestamp_millis(#content{properties = #'P_basic'{headers = Headers} = Props} = Content, TimestampMs) ->
-  case header(?TIMESTAMP_IN_MS, Headers) of
-    undefined ->
-      Content#content{
-        properties = Props#'P_basic'{headers = add_header(Headers, {?TIMESTAMP_IN_MS, long, TimestampMs})},
-        properties_bin = none
-       };
-    %% Do not overwrite an existing TIMESTAMP_IN_MS.
-    _ -> Content
-  end.
+set_content_timestamp_millis(#content{properties = #'P_basic'{headers = Headers}} = Content, TimestampMs, OverwriteTimestamps) ->
+    case {OverwriteTimestamps, header(?TIMESTAMP_IN_MS, Headers)} of
+        {true, _} ->
+            %% Overwrite or set a timestamp_in_ms header
+            set_content_timestamp_header(Content, TimestampMs);
+        {_, undefined} ->
+            %% No timestamp_in_ms header, so add one
+            set_content_timestamp_header(Content, TimestampMs);
+        _ ->
+            %% Do not overwrite an existing timestamp_in_ms header
+            Content
+    end.
 
 add_header(undefined, Header) -> [Header];
 add_header(Headers, Header) ->
   lists:keystore(element(1, Header), 1, Headers, Header).
+
+set_content_timestamp(#content{properties = Props0} = Content, Timestamp) ->
+    %% we need to reset properties_bin = none so the new properties
+    %% get serialized when delivering the message.
+    Props1 = Props0#'P_basic'{timestamp = Timestamp},
+    Content#content{properties = Props1, properties_bin = none}.
+
+set_content_timestamp_header(#content{properties = #'P_basic'{headers = Headers0} = Props0} = Content, TimestampMs) ->
+    Headers1 = add_header(Headers0, {?TIMESTAMP_IN_MS, long, TimestampMs}),
+    Props1 = Props0#'P_basic'{headers = Headers1},
+    Content#content{properties = Props1, properties_bin = none}.
