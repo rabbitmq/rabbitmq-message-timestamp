@@ -36,6 +36,20 @@ rabbitmq-plugins enable rabbitmq_message_timestamp
 The plugin will then hook into the `basic.publish` process in order to
 add the current timestamp as seen by the broker.
 
+## Always overwrite timestamps ##
+
+This plugin will not overwrite an existing timestamp on a message. To always
+overwrite, create an `advanced.config` file for RabbitMQ with the following
+content, or add the `rabbitmq_message_timestamp` term to your existing file:
+
+```
+[
+    {rabbitmq_message_timestamp, [
+        {overwrite_timestamps, true}
+    ]}
+].
+```
+
 ## Limitations ##
 
 The plugin hooks into the `basic.publish` path, so expect a small
