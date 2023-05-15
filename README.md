@@ -5,7 +5,18 @@ RabbitMQ with the current (server node) timestamp value.
 
 ## Supported RabbitMQ Versions ##
 
-This plugin targets RabbitMQ 3.6.0 and later versions.
+This plugin targets RabbitMQ 3.6.0 until 3.11.
+
+:warning: Starting in RabbitMQ 3.12, this plugin is **deprecated** :warning:
+
+In RabbitMQ 3.12 and later versions, instead of using this plugin, use the following `rabbitmq.conf` snippet:
+```ini
+message_interceptors.incoming.set_header_timestamp.overwrite = false
+```
+To allow timestamps being [overwritten](#always-overwrite-timestamps) use:
+```ini
+message_interceptors.incoming.set_header_timestamp.overwrite = true
+```
 
 ## Limitations
 
